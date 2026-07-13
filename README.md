@@ -18,3 +18,11 @@ rag-project/
 ├── src/
 ├── README.md
 └── requirements.txt
+```
+
+## Current Features
+
+- Load text documents
+- Generate sentence embeddings
+- Retrieve Top-K documents using cosine similarity
+- Similarity threshold filtering
