@@ -5,11 +5,11 @@ from load_data import load_paragraphs
 from search import search_top_k
 
 
-def main() -> None:
+def main():
     project_root = Path(__file__).resolve().parent.parent
     data_path = project_root / "data" / "sample.txt"
 
-    documents = load_paragraphs(str(data_path))
+    documents = load_paragraphs(data_path)
 
     print(f"{len(documents)} paragraphs loaded.")
 
@@ -20,6 +20,8 @@ def main() -> None:
     print("Generating document embeddings...")
     document_embeddings = embedder.encode_documents(documents)
     print("Document embeddings generated.")
+
+    threshold = 0.3
 
     while True:
         query = input("\nEnter query(q to quit): ").strip()
@@ -34,29 +36,29 @@ def main() -> None:
 
         query_embedding = embedder.encode_query(query)
         results = search_top_k(
-            query_embedding=query_embedding,
-            document_embeddings=document_embeddings,
-            documents=documents,
-            top_k=3,
+            query_embedding,
+            document_embeddings,
+            documents,
+            3,
         )
 
-        THRESHOLD = 0.3
+        filtered_results = []
+        for document, score in results:
+            if score >= threshold:
+                filtered_results.append((document, score))
 
-        filtered_results = [
-            (doc, score)
-            for doc, score in results
-            if score >= THRESHOLD
-        ]
-
-        if not filtered_results:
+        if (filtered_results) == 0:
             print("\nNo relevant documents found.")
             continue
 
         print("\nSearch result")
 
-        for rank, (document, score) in enumerate(filtered_results, start=1):
+        rank = 1
+        for document, score in filtered_results:
             print(f"\nRank: {rank} | Similarity: {score:.4f}")
             print(document)
+
+            rank += 1
 
 
 if __name__ == "__main__":
