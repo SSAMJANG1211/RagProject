@@ -17,7 +17,7 @@ class TextEmbedder:
 
         return embeddings
 
-    def encode_query(self, query: str):
+    def encode_query(self, query):
         # Embed one query and return as normalized vector.
         embedding = self.model.encode(
             query,

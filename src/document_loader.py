@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 def load_paragraphs(file_path):
     # Read text file and split paragraphs by empty line.
     path = Path(file_path);
@@ -9,11 +10,19 @@ def load_paragraphs(file_path):
 
     text = path.read_text(encoding="utf-8")
 
-    paragraphs = []
+    documents = []
+    chunk_id = 0
     for paragraph in text.split("\n\n"):
         paragraph = paragraph.strip()
 
         if paragraph:
-            paragraphs.append(paragraph)
+            document = {
+                "text": paragraph,
+                "source": path.name,
+                "chunk_id": chunk_id,
+            }
 
-    return paragraphs
+            documents.append(document)
+            chunk_id += 1
+
+    return documents

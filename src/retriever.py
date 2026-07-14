@@ -23,10 +23,18 @@ def search_top_k(
     top_indices = descending_indices[:top_k]
 
     results = []
+
     for index in top_indices:
         document = documents[index]
         score = float(similarities[index])
 
-        results.append((document, score))
+        result = {
+            "text": document["text"],
+            "source": document["source"],
+            "chunk_id": document["chunk_id"],
+            "score": score,
+        }
+
+        results.append(result)
 
     return results

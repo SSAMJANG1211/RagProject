@@ -1,8 +1,10 @@
 from pathlib import Path
 
-from embed import TextEmbedder
-from load_data import load_paragraphs
-from search import search_top_k
+from embedder import TextEmbedder
+from document_loader import load_paragraphs
+from prompt_builder import build_prompt
+from retriever import search_top_k
+from generator import AnswerGenerator
 
 
 def main():
@@ -13,15 +15,23 @@ def main():
 
     print(f"{len(documents)} paragraphs loaded.")
 
+    document_texts = []
+
+    for document in documents:
+        document_texts.append(document["text"])
+
     print("Loading embedding model...")
     embedder = TextEmbedder()
     print("Embedding model loaded.")
 
     print("Generating document embeddings...")
-    document_embeddings = embedder.encode_documents(documents)
+    document_embeddings = embedder.encode_documents(document_texts)
     print("Document embeddings generated.")
 
-    threshold = 0.3
+    generator = AnswerGenerator()
+
+    threshold = 0.1
+    top_k = 3
 
     while True:
         query = input("\nEnter query(q to quit): ").strip()
@@ -35,30 +45,45 @@ def main():
             continue
 
         query_embedding = embedder.encode_query(query)
+
         results = search_top_k(
             query_embedding,
             document_embeddings,
             documents,
-            3,
+            top_k,
         )
 
         filtered_results = []
-        for document, score in results:
-            if score >= threshold:
-                filtered_results.append((document, score))
 
-        if (filtered_results) == 0:
+        for result in results:
+            if result["score"] >= threshold:
+                filtered_results.append(result)
+
+        if len(filtered_results) == 0:
             print("\nNo relevant documents found.")
             continue
 
-        print("\nSearch result")
+        print("\nSearch results")
 
         rank = 1
-        for document, score in filtered_results:
-            print(f"\nRank: {rank} | Similarity: {score:.4f}")
-            print(document)
+
+        for result in filtered_results:
+            print(f"\nRank: {rank} | Similarity: {result['score']:.4f}")
+
+            print(f"Source: {result['source']} " f"| Chunk: {result['chunk_id']}")
+
+            print(result["text"])
 
             rank += 1
+
+        prompt = build_prompt(query, filtered_results, )
+
+        print("\nGenerating answer...")
+
+        answer = generator.generate(prompt)
+
+        print("\nGenerated answer")
+        print(answer)
 
 
 if __name__ == "__main__":
