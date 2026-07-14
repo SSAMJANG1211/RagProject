@@ -1,40 +1,93 @@
+import faiss
 import numpy as np
 
 
-def search_top_k(
-        query_embedding,
-        document_embeddings,
-        documents,
-        top_k=3,
-):
-    # Return Top-K similar document with query.
-    if len(documents) == 0:
-        return []
+class FaissRetriever:
+    def __init__(self, document_embeddings, documents):
+        self.documents = documents
 
-    if len(documents) != len(document_embeddings):
-        raise ValueError("The number of documents does not match with the number of embeddings.")
+        self.document_embeddings = np.array(
+            document_embeddings,
+            dtype=np.float32
+        )
 
-    similarities = document_embeddings @ query_embedding
+        if self.document_embeddings.ndim != 2:
+            raise ValueError(
+                "document_embeddings should be 2-dimensional array."
+            )
 
-    top_k = min(top_k, len(documents))
+        if len(self.documents) != len(self.document_embeddings):
+            raise ValueError(
+                "The number of documents does not match with the number of embeddings."
+            )
 
-    sorted_indices = np.argsort(similarities)
-    descending_indices = sorted_indices[::-1]
-    top_indices = descending_indices[:top_k]
+        if len(self.documents) == 0:
+            raise ValueError(
+                "There are no documents to create FAISS index."
+            )
 
-    results = []
+        normalized_embeddings = self.document_embeddings.copy()
 
-    for index in top_indices:
-        document = documents[index]
-        score = float(similarities[index])
+        faiss.normalize_L2(normalized_embeddings)
 
-        result = {
-            "text": document["text"],
-            "source": document["source"],
-            "chunk_id": document["chunk_id"],
-            "score": score,
-        }
+        embedding_dimension = normalized_embeddings.shape[1]
 
-        results.append(result)
+        self.index = faiss.IndexFlatIP(embedding_dimension)
 
-    return results
+        self.index.add(normalized_embeddings)
+
+    def retrieve(self, query_embedding, top_k=3):
+        query_embedding = np.array(
+            query_embedding,
+            dtype=np.float32
+        )
+
+        if query_embedding.ndim == 1:
+            query_embedding = query_embedding.reshape(1, -1)
+
+        if query_embedding.ndim != 2:
+            raise ValueError(
+                "query_embedding should be a 1-dimensional or 2-dimensional array."
+            )
+
+        if query_embedding.shape[1] != self.document_embeddings.shape[1]:
+            raise ValueError(
+                "The query and document embedding dimensions must match."
+            )
+
+        if top_k <= 0:
+            raise ValueError(
+                "top_k must be greater than 0."
+            )
+
+        if top_k > len(self.documents):
+            top_k = len(self.documents)
+
+        normalized_query = query_embedding.copy()
+        faiss.normalize_L2(normalized_query)
+
+        scores, indices = self.index.search(
+            normalized_query,
+            top_k
+        )
+
+        results = []
+
+        for i in range(top_k):
+            document_index = int(indices[0][i])
+
+            if document_index == -1:
+                continue
+
+            document = self.documents[document_index]
+
+            result = {
+                "text": document["text"],
+                "source": document["source"],
+                "chunk_id": document["chunk_id"],
+                "score": float(scores[0][i]),
+            }
+
+            results.append(result)
+
+        return results

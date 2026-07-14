@@ -3,7 +3,7 @@ from pathlib import Path
 from embedder import TextEmbedder
 from document_loader import load_paragraphs
 from prompt_builder import build_prompt
-from retriever import search_top_k
+from retriever import FaissRetriever
 from generator import AnswerGenerator
 
 
@@ -28,6 +28,15 @@ def main():
     document_embeddings = embedder.encode_documents(document_texts)
     print("Document embeddings generated.")
 
+    print("Creating FAISS index...")
+
+    retriever = FaissRetriever(
+        document_embeddings,
+        documents,
+    )
+
+    print("FAISS index created.")
+
     generator = AnswerGenerator()
 
     threshold = 0.1
@@ -46,10 +55,8 @@ def main():
 
         query_embedding = embedder.encode_query(query)
 
-        results = search_top_k(
+        results = retriever.retrieve(
             query_embedding,
-            document_embeddings,
-            documents,
             top_k,
         )
 
