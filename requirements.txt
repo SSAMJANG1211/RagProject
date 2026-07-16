@@ -1,4 +1,4 @@
-numpy
-sentence-transformers
-ollama
-faiss-cpu
+numpy==2.4.6
+sentence-transformers==5.6.0
+ollama==0.6.2
+faiss-cpu==1.14.3

@@ -28,11 +28,12 @@ class FaissRetriever:
 
         normalized_embeddings = self.document_embeddings.copy()
 
+        # Normalize document embeddings using L2 Norm.
         faiss.normalize_L2(normalized_embeddings)
 
-        embedding_dimension = normalized_embeddings.shape[1]
+        embedding_dimension = normalized_embeddings.shape[1]  # the number of columns (embedding dimension)
 
-        self.index = faiss.IndexFlatIP(embedding_dimension)
+        self.index = faiss.IndexFlatIP(embedding_dimension)  # inner product indicates cosine similarity
 
         self.index.add(normalized_embeddings)
 
@@ -64,8 +65,11 @@ class FaissRetriever:
             top_k = len(self.documents)
 
         normalized_query = query_embedding.copy()
+
+        # Normalize query embedding using L2 Norm.
         faiss.normalize_L2(normalized_query)
 
+        # Search index with query.
         scores, indices = self.index.search(
             normalized_query,
             top_k
@@ -79,6 +83,7 @@ class FaissRetriever:
             if document_index == -1:
                 continue
 
+            # Bring document based on document index.
             document = self.documents[document_index]
 
             result = {

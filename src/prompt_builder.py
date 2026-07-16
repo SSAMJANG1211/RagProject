@@ -27,4 +27,4 @@ Question:
 Answer:
 """.strip()
 
-    return prompt
+    return prompt  # prompt that contains context and query

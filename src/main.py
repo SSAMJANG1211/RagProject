@@ -24,17 +24,16 @@ def main():
     embedder = TextEmbedder()
     print("Embedding model loaded.")
 
+    # Encode external data.
     print("Generating document embeddings...")
     document_embeddings = embedder.encode_documents(document_texts)
     print("Document embeddings generated.")
 
     print("Creating FAISS index...")
-
     retriever = FaissRetriever(
         document_embeddings,
         documents,
     )
-
     print("FAISS index created.")
 
     generator = AnswerGenerator()
@@ -45,7 +44,7 @@ def main():
     while True:
         query = input("\nEnter query(q to quit): ").strip()
 
-        if query.lower() == "q":
+        if query.lower() == "q":  # Q or q
             print("Program terminated.")
             break
 
@@ -53,8 +52,10 @@ def main():
             print("Please enter a query.")
             continue
 
+        # Encode query.
         query_embedding = embedder.encode_query(query)
 
+        # Search index based on query and retrieve top k results.
         results = retriever.retrieve(
             query_embedding,
             top_k,
@@ -83,10 +84,12 @@ def main():
 
             rank += 1
 
+        # Build prompt based on query and filtered results.
         prompt = build_prompt(query, filtered_results, )
 
         print("\nGenerating answer...")
 
+        # Generate answer based on prompt.
         answer = generator.generate(prompt)
 
         print("\nGenerated answer")
