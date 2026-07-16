@@ -13,7 +13,7 @@ def main():
 
     documents = load_paragraphs(data_path)
 
-    print(f"{len(documents)} paragraphs loaded.")
+    print(f"{len(documents)} paragraphs loaded.\n")
 
     document_texts = []
 
@@ -22,19 +22,19 @@ def main():
 
     print("Loading embedding model...")
     embedder = TextEmbedder()
-    print("Embedding model loaded.")
+    print("Embedding model loaded.\n")
 
     # Encode external data.
     print("Generating document embeddings...")
     document_embeddings = embedder.encode_documents(document_texts)
-    print("Document embeddings generated.")
+    print("Document embeddings generated.\n")
 
     print("Creating FAISS index...")
     retriever = FaissRetriever(
         document_embeddings,
         documents,
     )
-    print("FAISS index created.")
+    print("FAISS index created.\n")
 
     generator = AnswerGenerator()
 
