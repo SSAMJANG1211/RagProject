@@ -6,7 +6,8 @@ class TextEmbedder:
             self,
             model_name: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
     ):
-        self.model = SentenceTransformer(model_name)
+        self.model_name = model_name
+        self.model = SentenceTransformer(self.model_name)
 
     def encode_documents(self, documents):
         # Embed various documents and return as normalized NumPy array.

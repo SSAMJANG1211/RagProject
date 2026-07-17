@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from embedder import TextEmbedder
+from embedding_cache import EmbeddingCache
 from document_loader import load_paragraphs
 from prompt_builder import build_prompt
 from retriever import FaissRetriever
@@ -10,6 +11,7 @@ from generator import AnswerGenerator
 def main():
     project_root = Path(__file__).resolve().parent.parent
     data_path = project_root / "data" / "sample.txt"
+    cache_path = project_root / "cache" / "embeddings.npz"
 
     documents = load_paragraphs(data_path)
 
@@ -24,10 +26,29 @@ def main():
     embedder = TextEmbedder()
     print("Embedding model loaded.\n")
 
-    # Encode external data.
-    print("Generating document embeddings...")
-    document_embeddings = embedder.encode_documents(document_texts)
-    print("Document embeddings generated.\n")
+    embedding_cache = EmbeddingCache(cache_path)
+
+    cache_key = embedding_cache.create_cache_key(
+        documents,
+        embedder.model_name,
+    )
+
+    document_embeddings = embedding_cache.load(cache_key)
+
+    # Cache does not exist.
+    if document_embeddings is None:
+        print("Generating document embeddings...")
+
+        document_embeddings = embedder.encode_documents(document_texts)
+
+        embedding_cache.save(
+            cache_key,
+            document_embeddings,
+        )
+
+        print("Document embeddings generated and saved to cache.\n")
+    else:
+        print("Document embeddings loaded from cache.\n")
 
     print("Creating FAISS index...")
     retriever = FaissRetriever(

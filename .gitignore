@@ -18,6 +18,7 @@ venv/
 Thumbs.db
 
 # Generated vector databases or model cache
+cache/
 vector_store/
 *.faiss
 *.index
