@@ -2,7 +2,7 @@ from pathlib import Path
 
 from embedder import TextEmbedder
 from embedding_cache import EmbeddingCache
-from document_loader import load_document
+from document_loader import is_url, load_document
 from prompt_builder import build_prompt
 from retriever import FaissRetriever
 from generator import AnswerGenerator
@@ -12,19 +12,22 @@ def main():
     project_root = Path(__file__).resolve().parent.parent
     cache_path = project_root / "cache" / "embeddings.npz"
 
-    source = input("Enter document path: ").strip()
+    source = input("Enter document path or URL: ").strip()
 
     if not source:
         print("Please enter a document path.")
         return
 
-    source_path = Path(source)
+    if is_url(source):
+        document_source = source
+    else:
+        document_source = Path(source)
 
-    if not source_path.is_absolute():
-        source_path = project_root / source_path
+        if not document_source.is_absolute():
+            document_source = project_root / document_source
 
     try:
-        documents = load_document(source_path)
+        documents = load_document(document_source)
 
     except (FileNotFoundError, ValueError) as error:
         print(error)

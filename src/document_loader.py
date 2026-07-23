@@ -1,6 +1,9 @@
 import csv
 from pathlib import Path
+from urllib.parse import urlparse
 
+import requests
+from bs4 import BeautifulSoup
 from pypdf import PdfReader
 
 
@@ -9,7 +12,7 @@ def load_txt(file_path):
     path = Path(file_path)
 
     if not path.exists():
-        raise FileNotFoundError(f"File can't be found. : {path}")
+        raise FileNotFoundError(f"File can't be found: {path}")
 
     text = path.read_text(encoding="utf-8")
 
@@ -145,11 +148,75 @@ def load_csv(file_path):
     return documents
 
 
+def is_url(source):
+    parsed_url = urlparse(str(source))
+
+    return parsed_url.scheme in ("http", "https") and bool(parsed_url.netloc)
+
+
+def load_url(url):
+    headers = {
+        "User-Agent": "Mozilla/5.0/"
+    }
+
+    try:
+        response = requests.get(
+            url,
+            headers=headers,
+            timeout=10,
+        )
+
+        response.raise_for_status()
+
+    except requests.RequestException as error:
+        raise ValueError(f"Web page could not be loaded: {url} ({error})")
+
+    content_type = response.headers.get("Content-Type", "").lower()
+
+    if "text/html" not in content_type:
+        raise ValueError(f"URL does not contain an HTML page: {url}")
+
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    # Remove elements that do not contain the main page content.
+    for tag in soup.find_all(
+            ["script", "style", "nav", "footer", "header", "noscript"]
+    ):
+        tag.decompose()
+
+    documents = []
+    chunk_id = 0
+
+    for element in soup.find_all(["h1", "h2", "h3", "p", "li"]):
+        text = element.get_text(" ", strip=True)
+
+        if not text:
+            continue
+
+        document = {
+            "text": text,
+            "source": url,
+            "chunk_id": chunk_id,
+        }
+
+        documents.append(document)
+        chunk_id += 1
+
+    if not documents:
+        raise ValueError(f"No text could be extracted from URL: {url}")
+
+    return documents
+
+
 def load_document(source):
+    # If the source is url.
+    if is_url(source):
+        return load_url(source)
+
     path = Path(source)
 
     if not path.exists():
-        raise FileNotFoundError(f"File can't be found. : {path}")
+        raise FileNotFoundError(f"File can't be found: {path}")
 
     extension = path.suffix.lower()
 
