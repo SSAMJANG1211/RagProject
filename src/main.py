@@ -2,7 +2,7 @@ from pathlib import Path
 
 from embedder import TextEmbedder
 from embedding_cache import EmbeddingCache
-from document_loader import load_paragraphs
+from document_loader import load_document
 from prompt_builder import build_prompt
 from retriever import FaissRetriever
 from generator import AnswerGenerator
@@ -10,12 +10,27 @@ from generator import AnswerGenerator
 
 def main():
     project_root = Path(__file__).resolve().parent.parent
-    data_path = project_root / "data" / "sample.txt"
     cache_path = project_root / "cache" / "embeddings.npz"
 
-    documents = load_paragraphs(data_path)
+    source = input("Enter document path: ").strip()
 
-    print(f"{len(documents)} paragraphs loaded.\n")
+    if not source:
+        print("Please enter a document path.")
+        return
+
+    source_path = Path(source)
+
+    if not source_path.is_absolute():
+        source_path = project_root / source_path
+
+    try:
+        documents = load_document(source_path)
+
+    except (FileNotFoundError, ValueError) as error:
+        print(error)
+        return
+
+    print(f"{len(documents)} chunks loaded.\n")
 
     document_texts = []
 
