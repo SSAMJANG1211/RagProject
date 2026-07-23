@@ -1,3 +1,4 @@
+import csv
 from pathlib import Path
 
 from pypdf import PdfReader
@@ -28,6 +29,9 @@ def load_txt(file_path):
 
             documents.append(document)
             chunk_id += 1
+
+    if not documents:
+        raise ValueError(f"No text could be extracted from TXT: {path.name}")
 
     return documents
 
@@ -73,6 +77,74 @@ def load_pdf(file_path):
     return documents
 
 
+def load_csv(file_path):
+    # Read csv file.
+    path = Path(file_path)
+
+    if not path.exists():
+        raise FileNotFoundError(f"File can't be found: {path}")
+
+    documents = []
+    chunk_id = 0
+
+    try:
+        with path.open(
+                mode="r",
+                encoding="utf-8-sig",
+                newline="",
+        ) as file:
+            reader = csv.DictReader(file)
+
+            if not reader.fieldnames:
+                raise ValueError(
+                    f"CSV header could not be found: {path.name}"
+                )
+
+            # The first line contains headers, so data starts at line 2.
+            for row_number, row in enumerate(reader, start=2):
+                row_texts = []
+
+                for column, value in row.items():
+                    if column is None or value is None:
+                        continue
+
+                    column = column.strip()
+                    value = value.strip()
+
+                    if column and value:
+                        row_texts.append(f"{column}: {value}")
+
+                if not row_texts:
+                    continue
+
+                text = "\n".join(row_texts)
+
+                document = {
+                    "text": text,
+                    "source": path.name,
+                    "chunk_id": chunk_id,
+                    "row": row_number,
+                }
+
+                documents.append(document)
+                chunk_id += 1
+
+    except UnicodeDecodeError:
+        raise ValueError(
+            f"CSV must be saved with UTF-8 encoding: {path.name}"
+        )
+
+    except csv.Error as error:
+        raise ValueError(
+            f"CSV could not be parsed: {path.name} ({error})"
+        )
+
+    if not documents:
+        raise ValueError(f"No data could be extracted from CSV: {path.name}")
+
+    return documents
+
+
 def load_document(source):
     path = Path(source)
 
@@ -88,5 +160,9 @@ def load_document(source):
     # If the file is pdf file.
     if extension == ".pdf":
         return load_pdf(path)
+
+    # If the file is csv file.
+    if extension == ".csv":
+        return load_csv(path)
 
     raise ValueError(f"Unsupported document type: {extension}")
