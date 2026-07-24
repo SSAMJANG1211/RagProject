@@ -86,12 +86,8 @@ class FaissRetriever:
             # Bring document based on document index.
             document = self.documents[document_index]
 
-            result = {
-                "text": document["text"],
-                "source": document["source"],
-                "chunk_id": document["chunk_id"],
-                "score": float(scores[0][i]),
-            }
+            result = document.copy()
+            result["score"] = float(scores[0][i])
 
             results.append(result)
 

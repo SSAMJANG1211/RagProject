@@ -117,7 +117,15 @@ def main():
         for result in filtered_results:
             print(f"\nRank: {rank} | Similarity: {result['score']:.4f}")
 
-            print(f"Source: {result['source']} " f"| Chunk: {result['chunk_id']}")
+            source_info = f"Source: {result['source']}"
+
+            if "page" in result:
+                source_info += f" | Page: {result['page']}"
+
+            if "row" in result:
+                source_info += f" | Row: {result['row']}"
+
+            print(source_info)
 
             print(result["text"])
 
