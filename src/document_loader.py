@@ -8,7 +8,7 @@ from pypdf import PdfReader
 
 
 def load_txt(file_path):
-    # Read text file.
+    # Read txt file.
     path = Path(file_path)
 
     if not path.exists():
@@ -22,7 +22,7 @@ def load_txt(file_path):
     for paragraph in text.split("\n\n"):
         paragraph = paragraph.strip()  # remove blank
 
-        if paragraph:  # only if paragraph contains an actual content (not blank)
+        if paragraph:  # only if paragraph contains an actual content
             # Append as a type of dictionary.
             document = {
                 "text": paragraph,
@@ -103,7 +103,7 @@ def load_csv(file_path):
                     f"CSV header could not be found: {path.name}"
                 )
 
-            # The first line contains headers, so data starts at line 2.
+            # The first line contains headers, so data starts from line 2.
             for row_number, row in enumerate(reader, start=2):
                 row_texts = []
 
